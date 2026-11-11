@@ -175,6 +175,64 @@ requestAnimationFrame(update);
 
 }
 
+// random booster location
+// random booster location
+function spawnSpeedBoost() {
+
+    const maxX = border.clientWidth - speedBoost.offsetWidth;
+    const maxY = border.clientHeight - speedBoost.offsetHeight;
+
+    let spawnX;
+    let spawnY;
+    let validPosition = false;
+    let attempts = 0;
+
+    // try finding a valid position
+    while (!validPosition && attempts < 100) {
+
+        // generate random coordinates
+        const padding = 15;
+
+        spawnX = padding + Math.random() * Math.max(0, maxX - padding * 2);
+        spawnY = padding + Math.random() * Math.max(0, maxY - padding * 2);
+
+        // check collision with obstacles
+        const hitsObstacle = [...obstacles].some(obstacle =>
+            spawnX < obstacle.offsetLeft + obstacle.offsetWidth &&
+            spawnX + speedBoost.offsetWidth > obstacle.offsetLeft &&
+            spawnY < obstacle.offsetTop + obstacle.offsetHeight &&
+            spawnY + speedBoost.offsetHeight > obstacle.offsetTop
+        );
+
+        // check collision with player
+        const hitsPlayer =
+            spawnX < x + player.offsetWidth &&
+            spawnX + speedBoost.offsetWidth > x &&
+            spawnY < y + player.offsetHeight &&
+            spawnY + speedBoost.offsetHeight > y;
+
+        // accept position if nothing overlaps
+        if (!hitsObstacle && !hitsPlayer) {
+            validPosition = true;
+        }
+
+        attempts++;
+    }
+
+    // apply the random position
+    if (validPosition) {
+        speedBoost.style.left = spawnX + "px";
+        speedBoost.style.top = spawnY + "px";
+    } else {
+        speedBoost.style.display = "none";
+        console.warn("No valid booster position found.");
+    }
+}
+
+// random booster placement
+spawnSpeedBoost();
+
+// start movement loop
 update();
 
 function isColliding (x, y, obstacle) {
