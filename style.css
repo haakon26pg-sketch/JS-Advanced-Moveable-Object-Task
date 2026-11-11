@@ -68,6 +68,24 @@ h1 {
     align-items: center;
     justify-content: center;
     box-shadow: 1px 2px black;
+
+    /* floating animation */
+    animation: float 2s ease-in-out infinite;
+}
+
+/* floating keyframes */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+        box-shadow: 0 0 5px gold;
+    }
+
+    50% {
+        transform: translateY(-10px);
+        box-shadow:
+            0 0 15px gold,
+            0 0 30px orange;
+    }
 }
 
 /* individual power-up placement */
@@ -78,7 +96,6 @@ h1 {
 
 /* Fade the card in and move it into place when the page loads. */
 .obstacle,
-.powerup,
 #player {
   opacity: 0;
   transform: translateY(16px);

@@ -1,7 +1,7 @@
 const player = document.querySelector("#player");
 const border = document.querySelector("#border");
 const obstacles = document.querySelectorAll(".obstacle");
-const speedBost = document.querySelector("#speedBoost");
+const speedBoost = document.querySelector("#speedBoost");
 
 // player position
 let x = 100;
@@ -20,6 +20,10 @@ let targetY = null;
 const acceleration = 0.6;
 const friction = 0.85;
 const maxSpeed = 7;
+
+// power-up settings
+let boostUntil = 0;
+const boostDuration = 4000;
 
 // store pressed keys
 const keys = {};
@@ -58,12 +62,19 @@ document.addEventListener("keyup", (event) => {
 
 function update() {
 
+    // check if speed bost is active
+const boosted = performance.now() < boostUntil;
+
+// adjust movement settings
+const currentAcceleration = boosted ? acceleration * 2 : acceleration;
+const currentMaxSpeed = boosted ? maxSpeed * 1.5 : maxSpeed;
+
 // accelerate in different directions when keys are pressed
 
-if(keys["ArrowRight"]) vx += acceleration;
-if(keys["ArrowLeft"]) vx -= acceleration;
-if(keys["ArrowUp"]) vy -= acceleration;
-if(keys["ArrowDown"]) vy += acceleration;
+if(keys["ArrowRight"]) vx += currentAcceleration;
+if(keys["ArrowLeft"]) vx -= currentAcceleration;
+if(keys["ArrowUp"]) vy -= currentAcceleration;
+if(keys["ArrowDown"]) vy += currentAcceleration;
 
 // mouse movement target clicked location
 if (targetX !== null && targetY !== null) {
@@ -76,8 +87,8 @@ if (targetX !== null && targetY !== null) {
 
 if (distance > 5) {
 
-    vx += (dx / distance) * acceleration;
-    vy += (dy / distance) * acceleration;
+    vx += (dx / distance) * currentAcceleration;
+    vy += (dy / distance) * currentAcceleration;
 } else {
 
     // destination reached
@@ -97,8 +108,8 @@ vx *= friction;
 vy *= friction;
 
 // limit maximum movement speed
-vx = Math.max(-maxSpeed, Math.min(vx, maxSpeed));
-vy = Math.max(-maxSpeed, Math.min(vy, maxSpeed));
+vx = Math.max(-currentMaxSpeed, Math.min(vx, currentMaxSpeed));
+vy = Math.max(-currentMaxSpeed, Math.min(vy, currentMaxSpeed));
 
 // calculate players next position
 const nextX = x + vx;
@@ -140,9 +151,24 @@ y = Math.max(0, Math.min(y, maxY));
 if (x === 0 || x === maxX) vx = 0;
 if (y === 0 || y === maxY) vy = 0;
 
+if (speedBoost && speedBoost.isConnected && isColliding(x, y, speedBoost)) {
+
+    // activate speed boost for 4 seconds
+    boostUntil = performance.now() + boostDuration;
+
+    // remove collected power-up
+    speedBoost.remove();
+
+}
+
+// change player color when boost is obtained
+player.style.backgroundColor = boosted ? "orange" : "royalblue";
+
 // update player CSS position
 player.style.left = x + "px";
 player.style.top = y + "px";
+
+
 
 // request next animation frame
 requestAnimationFrame(update);
@@ -159,4 +185,4 @@ function isColliding (x, y, obstacle) {
         y < obstacle.offsetTop + obstacle.offsetHeight &&
         y + player.offsetHeight > obstacle.offsetTop
     );
-}
+};
