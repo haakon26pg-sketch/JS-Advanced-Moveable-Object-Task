@@ -25,6 +25,13 @@ const maxSpeed = 7;
 let boostUntil = 0;
 const boostDuration = 4000;
 
+// respawn settings
+const boostRespawnDelay = 8000;
+const obstacleRespawnDelay = 6000;
+
+// obstacle destruction settings
+const attackRange = 45;
+
 // store pressed keys
 const keys = {};
 
@@ -41,15 +48,31 @@ border.addEventListener("click", (event) => {
 
 });
 
+
+// detect when key is pressed
 document.addEventListener("keydown", (event) => {
-    if (event.key.startsWith("Arrow")) {
-        event.preventDefault();
-        
-        targetX = null;
-        targetY = null;
-        
-        keys[event.key] = true;
+
+// destroy obstacles with spacebar
+if (event.code === "Space") {
+    event.preventDefault();
+
+    if (!event.repeat) {
+        destroyNearbyObstacle();
     }
+
+    return;
+}
+
+// arrow key movement
+if (event.key.startsWith("Arrow")) {
+    event.preventDefault();
+
+    targetX = null;
+    targetY = null;
+
+    keys[event.key] = true;
+}
+
 });
 
 // detect when key is released
@@ -117,6 +140,7 @@ const nextY = y + vy;
 
 // check for horizontal collision
 const collisionX = [...obstacles].some(obstacle =>
+    obstacle.style.display !== "none" &&
     isColliding(nextX, y, obstacle)
 );
 
@@ -129,6 +153,7 @@ if (!collisionX) {
 
 // check for vertical collision
 const collisionY = [...obstacles].some(obstacle =>
+    obstacle.style.display !== "none" &&
     isColliding(x, nextY, obstacle)
 );
 
@@ -151,14 +176,23 @@ y = Math.max(0, Math.min(y, maxY));
 if (x === 0 || x === maxX) vx = 0;
 if (y === 0 || y === maxY) vy = 0;
 
-if (speedBoost && speedBoost.isConnected && isColliding(x, y, speedBoost)) {
+// check if speed boost is collected
+if (
+    speedBoost &&
+    speedBoost.style.display !== "none" &&
+    isColliding(x, y, speedBoost)
+) {
 
     // activate speed boost for 4 seconds
     boostUntil = performance.now() + boostDuration;
 
-    // remove collected power-up
-    speedBoost.remove();
+    // hide collected booster
+    speedBoost.style.display = "none";
 
+    // respawn booster after 8 seconds
+    setTimeout(() => {
+        placeRandomly(speedBoost);
+    }, boostRespawnDelay);
 }
 
 // change player color when boost is obtained
@@ -175,62 +209,155 @@ requestAnimationFrame(update);
 
 }
 
-// random booster location
-// random booster location
-function spawnSpeedBoost() {
+// destroy obstacle near player
+function destroyNearbyObstacle() {
 
-    const maxX = border.clientWidth - speedBoost.offsetWidth;
-    const maxY = border.clientHeight - speedBoost.offsetHeight;
+    const playerCenterX = x + player.offsetWidth / 2;
+    const playerCenterY = y + player.offsetHeight / 2;
 
-    let spawnX;
-    let spawnY;
-    let validPosition = false;
-    let attempts = 0;
+    // find a nearby obstacle
+    const nearbyObstacle = [...obstacles].find(obstacle => {
 
-    // try finding a valid position
-    while (!validPosition && attempts < 100) {
-
-        // generate random coordinates
-        const padding = 15;
-
-        spawnX = padding + Math.random() * Math.max(0, maxX - padding * 2);
-        spawnY = padding + Math.random() * Math.max(0, maxY - padding * 2);
-
-        // check collision with obstacles
-        const hitsObstacle = [...obstacles].some(obstacle =>
-            spawnX < obstacle.offsetLeft + obstacle.offsetWidth &&
-            spawnX + speedBoost.offsetWidth > obstacle.offsetLeft &&
-            spawnY < obstacle.offsetTop + obstacle.offsetHeight &&
-            spawnY + speedBoost.offsetHeight > obstacle.offsetTop
-        );
-
-        // check collision with player
-        const hitsPlayer =
-            spawnX < x + player.offsetWidth &&
-            spawnX + speedBoost.offsetWidth > x &&
-            spawnY < y + player.offsetHeight &&
-            spawnY + speedBoost.offsetHeight > y;
-
-        // accept position if nothing overlaps
-        if (!hitsObstacle && !hitsPlayer) {
-            validPosition = true;
+        // ignore destroyed obstacles
+        if (obstacle.style.display === "none") {
+            return false;
         }
 
-        attempts++;
-    }
+        // find closest point on obstacle
+        const closestX = Math.max(
+            obstacle.offsetLeft,
+            Math.min(playerCenterX, obstacle.offsetLeft + obstacle.offsetWidth)
+        );
 
-    // apply the random position
-    if (validPosition) {
-        speedBoost.style.left = spawnX + "px";
-        speedBoost.style.top = spawnY + "px";
-    } else {
-        speedBoost.style.display = "none";
-        console.warn("No valid booster position found.");
+        const closestY = Math.max(
+            obstacle.offsetTop,
+            Math.min(playerCenterY, obstacle.offsetTop + obstacle.offsetHeight)
+        );
+
+        // calculate distance
+        const distance = Math.hypot(
+            playerCenterX - closestX,
+            playerCenterY - closestY
+        );
+
+        return distance <= attackRange;
+    });
+
+    // destroy nearby obstacle
+    if (nearbyObstacle) {
+
+        nearbyObstacle.style.display = "none";
+
+        // respawn after 6 seconds
+        setTimeout(() => {
+            placeRandomly(nearbyObstacle);
+        }, obstacleRespawnDelay);
     }
 }
 
-// random booster placement
-spawnSpeedBoost();
+
+// check if two rectacles overlap
+function rectanglesOverlap (ax, ay, aw, ah, bx, by, bw, bh) {
+
+    return (
+        ax < bx + bw &&
+        ax + aw > bx &&
+        ay < by + bh &&
+        ay + ah > by
+    );
+}
+
+// place an element randomly inside the play area
+function placeRandomly(element) {
+
+    if (!element) return;
+
+    // make the element visible for measurement
+    element.style.display = "";
+
+    const width = element.offsetWidth;
+    const height = element.offsetHeight;
+
+    const maxX = border.clientWidth - width;
+    const maxY = border.clientHeight - height;
+
+    // ensure the element fits inside the arena
+    if (maxX < 0 || maxY < 0) {
+        element.style.display = "none";
+        return;
+    }
+
+    const paddingX = Math.min(15, maxX / 2);
+    const paddingY = Math.min(15, maxY / 2);
+
+
+    // all objects we need to avoid
+    const objects = [...obstacles, speedBoost].filter(Boolean);
+
+    let validPosition = false;
+
+    // attempt to find a free position
+    for (let attempts = 0; attempts < 100; attempts++) {
+
+        const spawnX = paddingX + Math.random() * (maxX - paddingX * 2);
+        const spawnY = paddingY + Math.random() * (maxY - paddingY * 2);
+
+    // check player overlap
+    const hitsPlayer = rectanglesOverlap(
+        spawnX, spawnY, width, height,
+        x, y, player.offsetWidth, player.offsetHeight
+    );
+
+    // check overlap with other active objects
+    const hitsObject = objects.some(other => {
+
+        if (other === element || other.style.display === "none") {
+            return false;
+        }
+
+        return rectanglesOverlap(
+            spawnX, spawnY, width, height,
+            other.offsetLeft, other.offsetTop,
+            other.offsetWidth, other.offsetHeight
+        );
+        });
+
+    // accept valid position
+    if (!hitsPlayer && !hitsObject) {
+
+        element.style.left = spawnX + "px";
+        element.style.top = spawnY + "px";
+
+        validPosition = true;
+        break;
+    }
+
+}
+
+// hide object if no free position was found
+if (!validPosition) {
+    element.style.display = "none";
+    console.warn("Could not find a valid spawn position.");
+}
+
+}
+
+// hide objects before random placement
+obstacles.forEach(obstacle => {
+    obstacle.style.display = "none";
+});
+
+if (speedBoost) {
+    speedBoost.style.display = "none";
+}
+
+// randomize obstacle positions
+obstacles.forEach(obstacle => {
+    placeRandomly(obstacle);
+});
+
+// randomize booster position
+placeRandomly(speedBoost);
 
 // start movement loop
 update();
