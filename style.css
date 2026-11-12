@@ -15,7 +15,7 @@ background-color: rgb(75, 87, 183);
 
 #border {
     width: 1200px;
-    height: 530px;
+    height: 500px;
     border: 3px solid black;
     position: relative;
     margin: auto;
@@ -30,6 +30,16 @@ h1 {
     color: white;
     font-family: sans-serif;
     text-shadow: 1px 3px rgb(30, 29, 29);
+    user-select: none;
+}
+
+p {
+    text-align: center;
+    color: white;
+    opacity: 60%;
+    font-family: sans-serif;
+    text-shadow: 1px 3px rgb(30, 29, 29);
+    user-select: none;
 }
 
 /* obstacles */
@@ -73,6 +83,7 @@ h1 {
     height: 30px;
     background-color: gold;
     border-radius: 50%;
+    user-select: none;
 
     display: flex;
     align-items: center;
@@ -96,10 +107,11 @@ h1 {
 
 
     /* appearance */
-    background: #1f2937;
+    background: #facc15;
     color: white;
-    border: 1px solid #facc15;
+    border: 1px solid #000000;
     border-radius: 6px;
+    text-shadow: 1px 2px rgb(30, 29, 29);
 
     /* text */
     padding: 6px 10px;
