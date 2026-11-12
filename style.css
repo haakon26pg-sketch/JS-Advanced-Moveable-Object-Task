@@ -14,7 +14,7 @@ background-color: rgb(75, 87, 183);
 }
 
 #border {
-    width: 800px;
+    width: 1200px;
     height: 530px;
     border: 3px solid black;
     position: relative;
@@ -56,6 +56,16 @@ h1 {
     top: 230px;
 }
 
+#obstacle3 {
+    width: 70px;
+    height: 70px;
+}
+
+#obstacle4 {
+    width: 100px;
+    height: 45px;
+}
+
 /* power-ups */
 .powerup {
     position: absolute;
@@ -71,6 +81,68 @@ h1 {
 
     /* floating animation */
     animation: float 2s ease-in-out infinite;
+}
+
+/* player interaction prompt */
+#player {
+    overflow: visible;
+}
+
+#attackPrompt {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translate(-50%);
+
+
+    /* appearance */
+    background: #1f2937;
+    color: white;
+    border: 1px solid #facc15;
+    border-radius: 6px;
+
+    /* text */
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: bold;
+    white-space: nowrap;
+    font-family: sans-serif;
+
+
+    /* behaviour */
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+}
+
+/* obstacle destruction particles */
+.debris {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: #9ca3af;
+
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 5;
+
+    animation: debrisBurst 0.55s ease-out forwards;
+}
+
+/* debris explosion animation */
+@keyframes debrisBurst {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform:
+        translate(var(--dx), var(--dy))
+        rotate(var(--spin))
+        scale(0.3);
+    }
 }
 
 /* floating keyframes */
@@ -118,3 +190,18 @@ h1 {
   }
 }
 
+/* shake play area when obstacle is detroyed */
+function shakeScreen() {
+
+    border.animate([
+    {transform: "translate(0, 0"},
+    {transform: "translate(-5px, 3px"},
+    {transform: "translate(5px, -3px"},
+    {transform: "translate(-3px, -2px"},
+    {transform: "translate(3px, 2px"},
+    {transform: "translate(0, 0"},
+    ], {
+    duration: 230,
+    easing: "ease-out"
+    });
+}
